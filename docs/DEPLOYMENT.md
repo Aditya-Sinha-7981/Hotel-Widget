@@ -26,9 +26,9 @@ No build step, no dependencies. Node ≥ 18 (for global `fetch`).
 3. Railway auto-detects Node and runs `npm start` (`node server.js`).
    Nothing to configure for the build.
 4. **Settings → Networking → Generate Domain** → you get
-   `https://<app>.up.railway.app`.
+   `https://hotel-widget-production-bd67.up.railway.app`.
 5. Set the environment variables below (**Variables** tab), then redeploy.
-6. Open `https://<app>.up.railway.app/` — the demo page should load and the
+6. Open `https://hotel-widget-production-bd67.up.railway.app/` — the demo page should load and the
    widget should complete a full flow with real cities/properties.
 
 Redeploy on every push automatically.
@@ -49,11 +49,11 @@ Two `<script>` tags, pasted just before `</body>`:
 ```html
 <script>
   window.HotelAIConfig = {
-    baseUrl: "https://<app>.up.railway.app",
+    baseUrl: "https://hotel-widget-production-bd67.up.railway.app",
     hotelName: "Pride Hotel"
   };
 </script>
-<script src="https://<app>.up.railway.app/widget.js"></script>
+<script src="https://hotel-widget-production-bd67.up.railway.app/widget.js"></script>
 ```
 
 - `baseUrl` — our service URL. `widget.js` calls `` `${baseUrl}/API/<endpoint>` ``.
@@ -74,11 +74,11 @@ chat panel; it does not touch the rest of the page.
 
 ## Verifying a deploy
 
-- `GET https://<app>.up.railway.app/healthz` → `{"ok":true}`
-- `GET https://<app>.up.railway.app/server.js` → `404` (source is not served)
+- `GET https://hotel-widget-production-bd67.up.railway.app/healthz` → `{"ok":true}`
+- `GET https://hotel-widget-production-bd67.up.railway.app/server.js` → `404` (source is not served)
 - Widget flow on `/` completes and shows the thank-you screen
 - On the client's page: open DevTools → Network, run the flow, confirm calls
-  go to `<app>.up.railway.app/API/...` and return `200`
+  go to `hotel-widget-production-bd67.up.railway.app/API/...` and return `200`
 - Completed flow: the demo page's **Demo Console** (bottom-left) shows the
   captured lead payload
 

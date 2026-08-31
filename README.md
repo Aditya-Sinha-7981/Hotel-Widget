@@ -11,7 +11,8 @@ per-hotel `baseUrl`. See `docs/NEW_ARCHITECTURE.md` and `docs/api_result.md`.
 |------|------------|
 | `index.html` | Plain demo homepage + the on-page **Demo Console**. Ends with the two `<script>` tags. |
 | `widget.js`  | The embeddable widget. Self-injects a floating button + chat panel. All flow logic, validation, API calls, payload build. No dependencies, no build step. |
-| `server.js`  | Zero-dependency local dev server: serves the two files **and proxies `POST /API/*`** to the hotel host. Needed because the live API sends no CORS headers (a browser can't call it cross-origin). Dev shim only. |
+| `server.js`  | Zero-dependency Node server: serves `widget.js` + demo page **and proxies `POST /API/*`** to the hotel host. Runs both locally and as the deployed service (Railway). Needed because the live API sends no CORS headers. |
+| `package.json` | `start: node server.js`, Node ≥ 18. |
 
 ## Run it
 
@@ -69,34 +70,27 @@ Render: New -> Web Service -> repo -> Start command `node server.js`.
 ```html
 <script>
   window.HotelAIConfig = {
-    baseUrl: "https://YOUR-APP.up.railway.app",
+    baseUrl: "https://hotel-widget-production-bd67.up.railway.app",
     hotelName: "Pride Hotel"
   };
 </script>
-<script src="https://YOUR-APP.up.railway.app/widget.js"></script>
+<script src="https://hotel-widget-production-bd67.up.railway.app/widget.js"></script>
 ```
 
 He pastes it before `</body>` and edits `baseUrl` / `hotelName` in his HTML.
 `widget.js` calls `` `${baseUrl}/API/<endpoint>` ``; swapping `baseUrl` is
 the entire integration change.
 
-## Embedding on a real page
+## baseUrl values
 
-Drop these two tags at the end of `<body>`:
+`widget.js` calls `` `${baseUrl}/API/<endpoint>` ``. Set `baseUrl` to:
 
-```html
-<script>
-  window.HotelAIConfig = {
-    baseUrl: "https://pridehotel.thexoombox.in", // hotel API origin, or "" for same-origin
-    hotelName: "Pride Hotel"
-  };
-</script>
-<script src="widget.js"></script>
-```
+- **the deployed service URL** — `https://hotel-widget-production-bd67.up.railway.app`
+  — what the client uses (see the snippet above).
+- **`""` (empty)** — same-origin. Used by the bundled `index.html` because
+  the page and the proxy are served from the same host.
 
-Swapping `baseUrl` (and `hotelName`) is the entire per-hotel change.
-`widget.js` calls `` `${baseUrl}/API/<endpoint>` ``; an empty `baseUrl`
-means same-origin (what the demo uses, via `server.js`).
+`server.js` never exposes the hotel's real API host to the browser.
 
 ## Conversation flow
 

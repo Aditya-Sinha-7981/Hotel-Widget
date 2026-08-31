@@ -209,7 +209,7 @@
   </script>
 
   <!-- 1) widget config -->
-  <script>
+  <!-- <script>
     window.HotelAIConfig = {
       // Empty = call the API same-origin (this page's server proxies /API/*
       // to the hotel host — see server.js). The live API sends no CORS
@@ -219,8 +219,16 @@
       baseUrl: "",
       hotelName: "Pride Hotel"
     };
-  </script>
+  </script> -->
   <!-- 2) the widget -->
-  <script src="widget.js"></script>
+  <!-- <script src="widget.js"></script> -->
+
+  <script>
+  window.HotelAIConfig = {
+    baseUrl: "https://hotel-widget-production-bd67.up.railway.app",
+    hotelName: "Pride Hotel"
+  };
+</script>
+<script src="https://hotel-widget-production-bd67.up.railway.app/widget.js"></script>
 </body>
 </html>

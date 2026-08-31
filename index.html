@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pride Hotel</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #2b2320;
+      color: #f4efe9;
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .site-wordmark {
+      position: fixed; top: 22px; left: 24px;
+      font-size: 13px; letter-spacing: 3px; font-weight: 600;
+      color: #c9b7a3;
+    }
+
+    main {
+      flex: 1 1 auto;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; text-align: center;
+      padding: 96px 24px;
+    }
+    main h1 {
+      font-size: clamp(34px, 8vw, 72px);
+      font-weight: 700;
+      letter-spacing: clamp(4px, 2vw, 12px);
+    }
+    .rule { width: 64px; height: 3px; background: #c9b7a3; margin: 24px 0; border-radius: 2px; }
+    p.tag { font-size: clamp(15px, 2.4vw, 19px); color: #d8cec3; max-width: 460px; line-height: 1.6; }
+    p.note { margin-top: 28px; font-size: 13px; color: #8f857a; max-width: 430px; line-height: 1.6; }
+
+    /* ---- Demo Console (shows the lead payload the widget WOULD send) ---- */
+    .dc {
+      position: fixed; left: 20px; bottom: 20px;
+      width: 330px; max-width: calc(100vw - 40px);
+      background: #1f1916; border: 1px solid #3a302b; border-radius: 12px;
+      color: #ece5dd; font-size: 12px; z-index: 2147482000;
+      box-shadow: 0 12px 32px rgba(0,0,0,.4); overflow: hidden;
+    }
+    .dc-head {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      padding: 10px 12px; background: #262019; cursor: pointer; user-select: none;
+    }
+    .dc-head b { font-size: 12px; font-weight: 600; letter-spacing: .3px; }
+    .dc-head span { color: #9a8f82; font-size: 11px; }
+    .dc-body { padding: 12px; display: none; }
+    .dc.open .dc-body { display: block; }
+    .dc-body p { color: #a99e91; line-height: 1.5; margin-bottom: 10px; }
+    .dc-body code { color: #e0c9ac; font-family: "SFMono-Regular", Menlo, Consolas, monospace; }
+    .dc-status { color: #cdbfae; margin-bottom: 10px; word-break: break-word; }
+    .dc-btn {
+      width: 100%; padding: 9px 12px; border: 0; border-radius: 8px;
+      background: #c9b7a3; color: #241d19; font-weight: 600; font-size: 12px;
+      cursor: pointer; font-family: inherit;
+    }
+    .dc-btn:disabled { opacity: .5; cursor: default; }
+
+    .modal {
+      position: fixed; inset: 0; background: rgba(0,0,0,.6);
+      display: none; align-items: center; justify-content: center;
+      padding: 20px; z-index: 2147482500;
+    }
+    .modal.open { display: flex; }
+    .modal-card {
+      width: 100%; max-width: 560px; max-height: 82vh;
+      background: #1c1613; border: 1px solid #3a302b; border-radius: 14px;
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .modal-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px; border-bottom: 1px solid #322824;
+    }
+    .modal-head b { font-size: 13px; }
+    .modal-head button { background: none; border: 0; color: #b3a99d; font-size: 20px; cursor: pointer; line-height: 1; }
+    .modal-body { padding: 14px 16px; overflow: auto; }
+    .modal-body pre {
+      background: #120e0c; border: 1px solid #322824; border-radius: 8px; padding: 14px;
+      font-family: "SFMono-Regular", Menlo, Consolas, monospace; font-size: 12px; line-height: 1.55;
+      color: #e6ddd2; white-space: pre-wrap; word-break: break-word;
+    }
+    .modal-foot {
+      padding: 12px 16px; border-top: 1px solid #322824;
+      display: flex; justify-content: flex-end; gap: 8px;
+    }
+    .modal-foot button {
+      padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;
+      border: 1px solid #4a3f38; background: transparent; color: #d8cec3; font-family: inherit;
+    }
+    .modal-foot button.primary { background: #c9b7a3; color: #241d19; border-color: #c9b7a3; }
+
+    @media (max-width: 480px) {
+      .site-wordmark { top: 16px; left: 16px; }
+      .dc { left: 12px; bottom: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="site-wordmark">PRIDE&nbsp;HOTEL</div>
+
+  <main>
+    <h1>PRIDE HOTEL</h1>
+    <div class="rule"></div>
+    <p class="tag">Warm hospitality and easy stays across India.</p>
+    <p class="note">Demo homepage. The chat widget in the bottom-right corner is what we're showcasing.</p>
+  </main>
+
+  <!-- Demo Console: surfaces the lead payload the widget WOULD send. -->
+  <div class="dc" id="dc">
+    <div class="dc-head" id="dcHead">
+      <b>Demo Console</b>
+      <span id="dcHint">tap to expand</span>
+    </div>
+    <div class="dc-body">
+      <p>The widget does <b>not</b> call <code>save_lead</code> in this build. It hands the payload here instead. To go live, uncomment the marked line in <code>widget.js</code>.</p>
+      <div class="dc-status" id="dcStatus">No lead captured yet.</div>
+      <button class="dc-btn" id="dcView" disabled>View last lead payload</button>
+    </div>
+  </div>
+
+  <div class="modal" id="modal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <b>Lead payload (not sent)</b>
+        <button id="modalX" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body"><pre id="modalPre">&mdash;</pre></div>
+      <div class="modal-foot">
+        <button id="modalCopy">Copy JSON</button>
+        <button id="modalClose" class="primary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var dc = document.getElementById("dc");
+      var dcHead = document.getElementById("dcHead");
+      var dcHint = document.getElementById("dcHint");
+      var dcStatus = document.getElementById("dcStatus");
+      var dcView = document.getElementById("dcView");
+      var modal = document.getElementById("modal");
+      var modalPre = document.getElementById("modalPre");
+      var modalCopy = document.getElementById("modalCopy");
+      var last = null;
+
+      dcHead.addEventListener("click", function () {
+        dc.classList.toggle("open");
+        dcHint.textContent = dc.classList.contains("open") ? "tap to collapse" : "tap to expand";
+      });
+
+      window.addEventListener("hotelwidget:lead", function (e) {
+        last = (e.detail && e.detail.payload) || null;
+        var at = (e.detail && e.detail.at) || "";
+        var mode = (e.detail && e.detail.mode) || "";
+        dcStatus.textContent = "Captured "
+          + (at ? new Date(at).toLocaleTimeString() : "")
+          + (mode ? "  (" + mode + ")" : "");
+        dcView.disabled = !last;
+        dc.classList.add("open");
+        dcHint.textContent = "tap to collapse";
+      });
+
+      function openModal() {
+        if (!last) return;
+        modalPre.textContent = JSON.stringify(last, null, 2);
+        modal.classList.add("open");
+      }
+      function closeModal() { modal.classList.remove("open"); }
+
+      function flash(t) {
+        var o = modalCopy.textContent;
+        modalCopy.textContent = t;
+        setTimeout(function () { modalCopy.textContent = o; }, 1400);
+      }
+      function fallbackCopy(txt) {
+        var ta = document.createElement("textarea");
+        ta.value = txt;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand("copy"); flash("Copied!"); }
+        catch (e) { flash("Copy failed"); }
+        document.body.removeChild(ta);
+      }
+
+      dcView.addEventListener("click", openModal);
+      document.getElementById("modalX").addEventListener("click", closeModal);
+      document.getElementById("modalClose").addEventListener("click", closeModal);
+      modal.addEventListener("click", function (e) { if (e.target === modal) closeModal(); });
+      modalCopy.addEventListener("click", function () {
+        if (!last) return;
+        var txt = JSON.stringify(last, null, 2);
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(txt).then(function () { flash("Copied!"); }, function () { fallbackCopy(txt); });
+        } else {
+          fallbackCopy(txt);
+        }
+      });
+    })();
+  </script>
+
+  <!-- 1) widget config -->
+  <script>
+    window.HotelAIConfig = {
+      // Empty = call the API same-origin (this page's server proxies /API/*
+      // to the hotel host — see server.js). The live API sends no CORS
+      // headers, so a browser can't hit it cross-origin directly.
+      // For a real same-origin deployment, set this to the hotel API origin,
+      // e.g. "https://pridehotel.thexoombox.in".
+      baseUrl: "",
+      hotelName: "Pride Hotel"
+    };
+  </script>
+  <!-- 2) the widget -->
+  <script src="widget.js"></script>
+</body>
+</html>

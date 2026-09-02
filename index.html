@@ -208,27 +208,26 @@
     })();
   </script>
 
-  <!-- 1) widget config -->
-  <!-- <script>
+  <!--
+    Widget snippet — drop into any partner site's </body>.
+
+    Per-site swap (4 hotels, same API shape):
+      Change ONLY baseUrl below to this hotel's hosted proxy URL.
+      Each hotel has its own Railway deployment, and each Railway
+      deployment's UPSTREAM env var points at that hotel's API.
+
+    Do NOT point baseUrl directly at the hotel's API host — that
+    origin sends no CORS headers and the browser will block every
+    request. baseUrl must always be the proxy (Railway) URL.
+
+    hotelName is display-only (greeting, chips, branding).
+  -->
+  <script>
     window.HotelAIConfig = {
-      // Empty = call the API same-origin (this page's server proxies /API/*
-      // to the hotel host — see server.js). The live API sends no CORS
-      // headers, so a browser can't hit it cross-origin directly.
-      // For a real same-origin deployment, set this to the hotel API origin,
-      // e.g. "https://pridehotel.thexoombox.in".
-      baseUrl: "",
+      baseUrl: "https://hotel-widget-production-bd67.up.railway.app",
       hotelName: "Pride Hotel"
     };
-  </script> -->
-  <!-- 2) the widget -->
-  <!-- <script src="widget.js"></script> -->
-
-  <script>
-  window.HotelAIConfig = {
-    baseUrl: "https://hotel-widget-production-bd67.up.railway.app",
-    hotelName: "Pride Hotel"
-  };
-</script>
-<script src="https://hotel-widget-production-bd67.up.railway.app/widget.js"></script>
+  </script>
+  <script src="https://hotel-widget-production-bd67.up.railway.app/widget.js"></script>
 </body>
 </html>

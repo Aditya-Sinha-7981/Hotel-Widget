@@ -109,7 +109,15 @@
       city_id: null, city_name: "",
       hotel_id: null, hotel_name: "",
       department_id: null, department_name: "",
-      query: ""
+      query: "",
+      check_in_date: null,
+      check_out_date: null,
+      dining_date: null,
+      guests: "",
+      meal_time: "",
+      event_type: "",
+      min_headcount: "",
+      event_timing: ""
     };
   }
 
@@ -294,6 +302,71 @@
       wrap.appendChild(c);
     });
     body.appendChild(wrap);
+    scrollDown();
+    resetIdle();
+  }
+
+  /* ---------- date helpers + picker ------------------------- */
+
+  function toISODate(date) {
+    var y = date.getFullYear();
+    var m = String(date.getMonth() + 1).padStart(2, "0");
+    var d = String(date.getDate()).padStart(2, "0");
+    return y + "-" + m + "-" + d;
+  }
+
+  function todayISO() {
+    return toISODate(new Date());
+  }
+
+  function addDaysISO(iso, n) {
+    var parts = String(iso).split("-").map(Number);
+    var dt = new Date(parts[0], parts[1] - 1, parts[2]);
+    dt.setDate(dt.getDate() + n);
+    return toISODate(dt);
+  }
+
+  function formatDateLabel(iso) {
+    var parts = String(iso).split("-").map(Number);
+    return new Date(parts[0], parts[1] - 1, parts[2])
+      .toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+  }
+
+  function renderDatePicker(opts, cb) {
+    var msg = el("div", "hw-msg hw-bot");
+    var card = el("div", "hw-datepicker");
+    var inner = el("div", "hw-datepicker-inner");
+    var dateInput = document.createElement("input");
+    dateInput.type = "date";
+    dateInput.min = opts.min || todayISO();
+    dateInput.max = opts.max || "9999-12-31";
+    var err = el("div", "hw-datepicker-err");
+    var ok = el("button", "hw-chip", "Confirm");
+    ok.type = "button";
+    ok.addEventListener("click", function () {
+      if (state.busy || card.getAttribute("data-done")) return;
+      var val = dateInput.value;
+      if (!val) {
+        err.textContent = "Please choose a date.";
+        err.style.display = "block";
+        return;
+      }
+      if (opts.after && val <= opts.after) {
+        err.textContent = "Please choose a date after " + formatDateLabel(opts.after) + ".";
+        err.style.display = "block";
+        return;
+      }
+      card.setAttribute("data-done", "1");
+      ok.disabled = true;
+      dateInput.disabled = true;
+      cb(val);
+    });
+    inner.appendChild(dateInput);
+    inner.appendChild(ok);
+    card.appendChild(inner);
+    card.appendChild(err);
+    msg.appendChild(card);
+    body.appendChild(msg);
     scrollDown();
     resetIdle();
   }
@@ -522,7 +595,13 @@
           state.answers.department_id = val.slice(4);
           state.answers.department_name = label;
           sentMsg(label);
-          typingThen(askQuery);
+          typingThen(function () {
+            var d = state.answers.department_name.toLowerCase();
+            if (d.indexOf("room") !== -1) askCheckIn();
+            else if (d.indexOf("restaurant") !== -1) askDiningDate();
+            else if (d.indexOf("banquet") !== -1) askEventType();
+            else askQuery();
+          });
         });
       }).catch(apiError);
     });
@@ -539,6 +618,112 @@
     });
   }
 
+  /* ---------- department-specific flows ------------------- */
+
+  function askCheckIn() {
+    state.step = "checkin";
+    disableInput("Choose an option above");
+    botMsg("When would you like to check in?");
+    renderDatePicker({ min: todayISO() }, function (iso) {
+      state.answers.check_in_date = iso;
+      sentMsg(formatDateLabel(iso));
+      typingThen(askCheckOut);
+    });
+  }
+
+  function askCheckOut() {
+    state.step = "checkout";
+    disableInput("Choose an option above");
+    botMsg("And when would you like to check out?");
+    renderDatePicker({ min: addDaysISO(state.answers.check_in_date, 1), after: state.answers.check_in_date }, function (iso) {
+      state.answers.check_out_date = iso;
+      sentMsg(formatDateLabel(iso));
+      typingThen(askGuests);
+    });
+  }
+
+  function askGuests() {
+    state.step = "guests";
+    disableInput("Choose an option above");
+    botMsg("How many guests?");
+    renderChips([{ label: "1", value: "1" }, { label: "2", value: "2" }, { label: "3", value: "3" }, { label: "4", value: "4" }, { label: "5+", value: "5+" }], function (val, label) {
+      state.answers.guests = val;
+      sentMsg(label);
+      typingThen(askQuery);
+    });
+  }
+
+  function askDiningDate() {
+    state.step = "diningdate";
+    disableInput("Choose an option above");
+    botMsg("Which date would you like to dine?");
+    renderDatePicker({ min: todayISO() }, function (iso) {
+      state.answers.dining_date = iso;
+      sentMsg(formatDateLabel(iso));
+      typingThen(askMealTime);
+    });
+  }
+
+  function askMealTime() {
+    state.step = "mealtime";
+    disableInput("Choose an option above");
+    botMsg("Which meal are you planning for?");
+    renderChips([{ label: "Breakfast", value: "Breakfast" }, { label: "Lunch", value: "Lunch" }, { label: "Dinner", value: "Dinner" }], function (val, label) {
+      state.answers.meal_time = val;
+      sentMsg(label);
+      typingThen(askGuests);
+    });
+  }
+
+  function askEventType() {
+    state.step = "eventtype";
+    disableInput("Choose an option above");
+    botMsg("What type of event is it?");
+    renderChips([
+      { label: "Marriage", value: "Marriage" },
+      { label: "Out Door Catering", value: "Out Door Catering" },
+      { label: "Cultural Events", value: "Cultural Events" },
+      { label: "Corporate Events", value: "Corporate Events" },
+      { label: "Anniversary", value: "Anniversary" }
+    ], function (val, label) {
+      state.answers.event_type = val;
+      sentMsg(label);
+      typingThen(askMinHeadcount);
+    });
+  }
+
+  function askMinHeadcount() {
+    state.step = "headcount";
+    disableInput("Choose an option above");
+    botMsg("What's the minimum headcount?");
+    renderChips([
+      { label: "Up to 100", value: "Up to 100" },
+      { label: "100-200", value: "100-200" },
+      { label: "200-500", value: "200-500" },
+      { label: "500+", value: "500+" }
+    ], function (val, label) {
+      state.answers.min_headcount = val;
+      sentMsg(label);
+      typingThen(askEventTiming);
+    });
+  }
+
+  function askEventTiming() {
+    state.step = "eventtiming";
+    disableInput("Choose an option above");
+    botMsg("Which timing suits you?");
+    renderChips([
+      { label: "Morning", value: "Morning" },
+      { label: "Afternoon", value: "Afternoon" },
+      { label: "Evening", value: "Evening" },
+      { label: "Night", value: "Night" }
+    ], function (val, label) {
+      state.answers.event_timing = val;
+      sentMsg(label);
+      typingThen(askQuery);
+    });
+  }
+
   /* ---------- payload + submit ------------------------------ */
 
   function toIdMaybeNumber(v) {
@@ -546,19 +731,31 @@
     return /^\d+$/.test(String(v)) ? Number(v) : String(v);
   }
 
+  function firstNumber(v) {
+    if (v == null || v === "") return null;
+    var m = String(v).match(/\d+/);
+    return m ? Number(m[0]) : null;
+  }
+
   function buildPayload() {
     var a = state.answers;
+    var extras = [];
+    if (a.check_out_date) extras.push("Check-out: " + a.check_out_date);
+    if (a.meal_time) extras.push("Meal: " + a.meal_time);
+    if (a.event_type) extras.push("Event: " + a.event_type);
+    if (a.min_headcount) extras.push("Minimum headcount: " + a.min_headcount);
+    if (a.event_timing) extras.push("Timing: " + a.event_timing);
     return {
       name: a.name || "",
       email: "",
       phone: a.phone || "",
       property: toIdMaybeNumber(a.hotel_id),
       department: toIdMaybeNumber(a.department_id),
-      comments: "",
+      comments: extras.join(", "),
       query: a.query || "",
       user_channel: "Website Chatbot",
-      pax: null,
-      booking_date: null,
+      pax: firstNumber(a.guests) || firstNumber(a.min_headcount) || null,
+      booking_date: a.check_in_date || a.dining_date || null,
       restaurant_id: null,
       time_slot_id: null
     };
@@ -586,7 +783,7 @@
     // ─────────────────────────────────────────────────────────────────
     // save_lead is intentionally NOT called during testing.
     // Uncomment the next line to POST the payload to {baseUrl}/API/save_lead.
-    postLead(payload);
+    // postLead(payload);
     // ─────────────────────────────────────────────────────────────────
 
     finish();
@@ -735,6 +932,12 @@
       '.hw-send{flex:0 0 auto;width:42px;height:42px;border:0;border-radius:50%;background:#3a2e2a;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;}',
       '.hw-send:disabled{background:#cabfb4;cursor:default;}',
       '.hw-send svg{width:18px;height:18px;}',
+      '.hw-datepicker{background:#fff;border:1px solid #e7e2dd;border-radius:14px;border-bottom-left-radius:5px;padding:10px 12px;max-width:100%;}',
+      '.hw-datepicker-inner{display:flex;gap:8px;align-items:center;}',
+      '.hw-datepicker input[type=date]{flex:1;min-width:0;border:1.5px solid #ecd9c9;background:#fbf3ec;color:#2b2320;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;outline:none;}',
+      '.hw-datepicker input[type=date]:focus{border-color:#c79a76;}',
+      '.hw-datepicker .hw-chip{white-space:nowrap;}',
+      '.hw-datepicker-err{color:#b3261e;font-size:12px;margin-top:6px;display:none;}',
       '@media (max-width:480px){.hw-panel{right:0;bottom:0;width:100vw;height:100vh;height:100dvh;max-height:none;border-radius:0;}.hw-btn{right:16px;bottom:16px;}}'
     ].join("\n");
     var style = document.createElement("style");

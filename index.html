@@ -208,20 +208,6 @@
     })();
   </script>
 
-  <!--
-    Widget snippet — drop into any partner site's </body>.
-
-    Per-site swap (4 hotels, same API shape):
-      Change ONLY baseUrl below to this hotel's hosted proxy URL.
-      Each hotel has its own Railway deployment, and each Railway
-      deployment's UPSTREAM env var points at that hotel's API.
-
-    Do NOT point baseUrl directly at the hotel's API host — that
-    origin sends no CORS headers and the browser will block every
-    request. baseUrl must always be the proxy (Railway) URL.
-
-    hotelName is display-only (greeting, chips, branding).
-  -->
   <script>
     window.HotelAIConfig = {
       baseUrl: "https://hotel-widget-production-bd67.up.railway.app",

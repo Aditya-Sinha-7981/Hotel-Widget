@@ -443,7 +443,7 @@
     if (state.started) return;
     state.started = true;
     botDate();
-    botMsg("Namaste 🙏  I'm your virtual assistant, here to help you with " + HOTEL_NAME.toUpperCase() + ".");
+    botMsg("Hi, I am Xoomi, your personal AI assistant by TheXoombox");
     var saved = loadContact();
     if (saved) {
       state.answers.name = saved.name;
@@ -938,6 +938,9 @@
       '.hw-datepicker input[type=date]:focus{border-color:#c79a76;}',
       '.hw-datepicker .hw-chip{white-space:nowrap;}',
       '.hw-datepicker-err{color:#b3261e;font-size:12px;margin-top:6px;display:none;}',
+      '.hw-powered{flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:6px;padding:6px 14px 10px;background:#f1eeec;font-size:11px;color:#9a9088;text-decoration:none;}',
+      '.hw-powered img{height:14px;width:auto;}',
+      '.hw-powered:hover{text-decoration:underline;}',
       '@media (max-width:480px){.hw-panel{right:0;bottom:0;width:100vw;height:100vh;height:100dvh;max-height:none;border-radius:0;}.hw-btn{right:16px;bottom:16px;}}'
     ].join("\n");
     var style = document.createElement("style");
@@ -991,6 +994,18 @@
     panel.appendChild(body);
     panel.appendChild(errLine);
     panel.appendChild(footer);
+
+    var powered = document.createElement("a");
+    powered.className = "hw-powered";
+    powered.href = "https://thexoombox.com";
+    powered.target = "_blank";
+    powered.rel = "noopener noreferrer";
+    powered.textContent = "Powered by ";
+    var poweredImg = document.createElement("img");
+    poweredImg.src = "xoombox-logo-main_new.png";
+    poweredImg.alt = "TheXoombox";
+    powered.appendChild(poweredImg);
+    panel.appendChild(powered);
 
     document.body.appendChild(btn);
     document.body.appendChild(panel);

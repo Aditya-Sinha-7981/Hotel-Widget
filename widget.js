@@ -169,7 +169,7 @@
 
   function validName(v) {
     var s = sanitizeText(v, 60);
-    var letters = s.replace(/[^A-Za-zÀ-ɏऀ-ॿ]/g, "");
+    var letters = s.replace(/[^A-Za-z\u00C0-\u014F\u0900-\u097F]/g, "");
     return letters.length >= 2 ? s : null;
   }
 

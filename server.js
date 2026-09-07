@@ -28,7 +28,7 @@ const fs = require("fs");
 const path = require("path");
 
 const PORT = process.env.PORT || 8000;
-const UPSTREAM = process.env.UPSTREAM || "https://pridehotel.thexoombox.in";
+const UPSTREAM = process.env.UPSTREAM || "https://pravasahotels.thexoombox.in/";
 const MAX_BODY = 100_000;
 const RATE_WINDOW_MS = 60_000;
 const RATE_MAX = Number(process.env.RATE_MAX || 40);

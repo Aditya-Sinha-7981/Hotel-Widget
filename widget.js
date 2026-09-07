@@ -135,7 +135,7 @@
 
   /* ---------- DOM refs -------------------------------------------- */
 
-  var btn, panel, body, footer, input, sendBtn, errLine;
+  var btn, panel, body, footer, input, sendBtn, errLine, acWrap, acDrop;
 
   /* ---------- small helpers ------------------------------------- */
 
@@ -409,6 +409,7 @@
   }
 
   function expectText(placeholder, maxLen) {
+    hideAC();
     input.disabled = false;
     sendBtn.disabled = false;
     input.placeholder = placeholder || "Write a reply…";
@@ -418,6 +419,7 @@
     try { input.focus(); } catch (e) {}
   }
   function disableInput(placeholder) {
+    hideAC();
     input.disabled = true;
     sendBtn.disabled = true;
     input.value = "";
@@ -435,6 +437,110 @@
   function guardedApi(fn) {
     state.retry = fn;
     fn();
+  }
+
+  /* ---------- city autocomplete ----------------------------- */
+
+  var acIndex = -1;
+
+  function showAC(query) {
+    if (!acDrop || !state.cities || state.step !== "city") { hideAC(); return; }
+    var q = (query || "").toLowerCase().trim();
+    if (!q) { hideAC(); return; }
+
+    var matches = state.cities.filter(function (c) {
+      return String(c.city_name).toLowerCase().indexOf(q) !== -1;
+    }).sort(function (a, b) {
+      var ad = String(a.city_name).toLowerCase().indexOf(q);
+      var bd = String(b.city_name).toLowerCase().indexOf(q);
+      return (ad - bd) || String(a.city_name).localeCompare(String(b.city_name));
+    }).slice(0, 8);
+
+    if (!matches.length) { hideAC(); return; }
+
+    acDrop.innerHTML = "";
+    acIndex = 0;
+
+    matches.forEach(function (c, i) {
+      var item = el("div", "hw-ac-item");
+      if (i === 0) item.classList.add("hw-ac-active");
+      var name = String(c.city_name);
+      var lowerName = name.toLowerCase();
+      var pos = lowerName.indexOf(q);
+      if (pos !== -1) {
+        item.appendChild(document.createTextNode(name.slice(0, pos)));
+        var mark = el("span", "hw-ac-item-mark", name.slice(pos, pos + q.length));
+        item.appendChild(mark);
+        item.appendChild(document.createTextNode(name.slice(pos + q.length)));
+      } else {
+        item.textContent = name;
+      }
+      item.addEventListener("mousedown", function (e) {
+        e.preventDefault();
+        selectACCity(c);
+      });
+      item.setAttribute("data-city-id", String(c.city_id));
+      acDrop.appendChild(item);
+    });
+
+    acDrop.classList.add("hw-ac-open");
+  }
+
+  function hideAC() {
+    if (!acDrop) return;
+    acDrop.classList.remove("hw-ac-open");
+    acDrop.innerHTML = "";
+    acIndex = -1;
+  }
+
+  function highlightAC(dir) {
+    var items = acDrop.querySelectorAll(".hw-ac-item");
+    if (!items.length) return;
+    if (acIndex >= 0 && items[acIndex]) items[acIndex].classList.remove("hw-ac-active");
+    acIndex += dir;
+    if (acIndex < 0) acIndex = items.length - 1;
+    if (acIndex >= items.length) acIndex = 0;
+    items[acIndex].classList.add("hw-ac-active");
+    items[acIndex].scrollIntoView({ block: "nearest" });
+  }
+
+  function selectACHighlighted() {
+    var items = acDrop.querySelectorAll(".hw-ac-item");
+    if (acIndex < 0 || acIndex >= items.length) return false;
+    var id = items[acIndex].getAttribute("data-city-id");
+    var c = (state.cities || []).filter(function (x) { return String(x.city_id) === id; })[0];
+    if (c) { selectACCity(c); return true; }
+    return false;
+  }
+
+  function selectACCity(c) {
+    hideAC();
+    input.value = "";
+    sentMsg(String(c.city_name));
+    pickCity(c);
+  }
+
+  function onACInput() {
+    if (state.step === "city") showAC(input.value);
+  }
+
+  function onACKeydown(e) {
+    if (state.step !== "city" || !acDrop.classList.contains("hw-ac-open")) return;
+    if (e.key === "ArrowDown") { e.preventDefault(); highlightAC(1); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); highlightAC(-1); }
+    else if (e.key === "Enter" && acIndex >= 0) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      selectACHighlighted();
+    }
+    else if (e.key === "Escape") { hideAC(); }
+  }
+
+  function prefetchCities() {
+    if (state.cities) return;
+    api("/API/getCities", {}).then(function (cities) {
+      state.cities = cities;
+    }).catch(function () {});
   }
 
   /* ---------- conversation flow ----------------------------- */
@@ -473,12 +579,14 @@
     state.step = "city";
     botMsg("Please enter the destination / city of your choice, e.g. Indore, Pune, Goa.");
     expectText("Type a city name", 50);
+    prefetchCities();
   }
 
   function doCityLookup(typed) {
     state.busy = true;
     setTyping(true);
-    api("/API/getCities", {}).then(function (cities) {
+    var p = state.cities ? Promise.resolve(state.cities) : api("/API/getCities", {});
+    p.then(function (cities) {
       setTyping(false);
       state.busy = false;
       state.cities = cities;
@@ -807,6 +915,7 @@
   function restart() {
     body.innerHTML = "";
     hideError();
+    hideAC();
     state.step = null;
     state.busy = false;
     state.ended = false;
@@ -941,6 +1050,13 @@
       '.hw-powered{flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:6px;padding:6px 14px 10px;background:#f1eeec;font-size:11px;color:#9a9088;text-decoration:none;}',
       '.hw-powered img{height:14px;width:auto;}',
       '.hw-powered:hover{text-decoration:underline;}',
+      '.hw-ac-wrap{position:relative;display:flex;gap:8px;flex:1 1 auto;min-width:0;}',
+      '.hw-ac{position:absolute;bottom:100%;left:0;right:0;max-height:180px;overflow-y:auto;background:#fff;border:1.5px solid #e7e2dd;border-bottom:0;border-radius:12px 12px 0 0;z-index:10;display:none;box-shadow:0 -4px 12px rgba(0,0,0,.1);}',
+      '.hw-ac.hw-ac-open{display:block;}',
+      '.hw-ac-item{padding:10px 14px;cursor:pointer;font-size:13px;color:#2b2320;border-bottom:1px solid #f0ebe6;transition:background .1s;}',
+      '.hw-ac-item:last-child{border-bottom:0;}',
+      '.hw-ac-item:hover,.hw-ac-item.hw-ac-active{background:#f5efe9;}',
+      '.hw-ac-item-mark{background:#e8dfd6;border-radius:3px;padding:0 2px;}',
       '@media (max-width:480px){.hw-panel{right:0;bottom:0;width:100vw;height:100vh;height:100dvh;max-height:none;border-radius:0;}.hw-btn{right:16px;bottom:16px;}}'
     ].join("\n");
     var style = document.createElement("style");
@@ -977,6 +1093,11 @@
 
     footer = el("form", "hw-footer");
     footer.setAttribute("novalidate", "novalidate");
+
+    acWrap = el("div", "hw-ac-wrap");
+    acDrop = el("div", "hw-ac");
+    acWrap.appendChild(acDrop);
+
     input = el("input", "hw-input");
     input.type = "text";
     input.autocomplete = "off";
@@ -987,8 +1108,9 @@
     sendBtn.disabled = true;
     sendBtn.setAttribute("aria-label", "Send");
     sendBtn.appendChild(svgSpan(ICON_SEND));
-    footer.appendChild(input);
-    footer.appendChild(sendBtn);
+    acWrap.appendChild(input);
+    acWrap.appendChild(sendBtn);
+    footer.appendChild(acWrap);
 
     panel.appendChild(header);
     panel.appendChild(body);
@@ -1018,6 +1140,11 @@
     });
     input.addEventListener("input", function () {
       if (errLine.style.display === "block") hideError();
+      onACInput();
+    });
+    input.addEventListener("keydown", onACKeydown);
+    document.addEventListener("mousedown", function (e) {
+      if (acWrap && !acWrap.contains(e.target)) hideAC();
     });
   }
 

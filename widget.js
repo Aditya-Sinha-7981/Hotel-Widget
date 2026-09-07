@@ -783,7 +783,7 @@
     // ─────────────────────────────────────────────────────────────────
     // save_lead is intentionally NOT called during testing.
     // Uncomment the next line to POST the payload to {baseUrl}/API/save_lead.
-    // postLead(payload);
+    postLead(payload);
     // ─────────────────────────────────────────────────────────────────
 
     finish();

@@ -994,22 +994,32 @@
 
   /* ---------- shell + wiring ------------------------------ */
 
-  var ICON_CHAT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
-  var ICON_AVATAR = '<svg viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="20" fill="#c9b7a3"/><circle cx="20" cy="16" r="6" fill="#3a2e2a"/><path d="M8 34c1.5-6.5 6.4-10 12-10s10.5 3.5 12 10z" fill="#3a2e2a"/></svg>';
   var ICON_SEND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>';
+
+  // Header avatar image: set window.HotelAIConfig.avatarUrl to your CDN URL,
+  // otherwise it falls back to {baseUrl}/xoomi.png.
+  var AVATAR_URL = String(cfg.avatarUrl || "https://thexoombox.com/xoomi.png").trim() || "";
+
+  function avatarEl() {
+    var img = document.createElement("img");
+    img.className = "hw-avatar-img";
+    img.src = AVATAR_URL;
+    img.alt = HOTEL_NAME;
+    img.loading = "lazy";
+    return img;
+  }
 
   function injectStyle() {
     var css = [
       '.hw-btn,.hw-panel,.hw-panel *{box-sizing:border-box;}',
-      '.hw-btn{position:fixed;right:22px;bottom:22px;width:58px;height:58px;border:0;border-radius:50%;cursor:pointer;z-index:2147483000;background:#3a2e2a;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(0,0,0,.28);transition:transform .18s ease,box-shadow .18s ease;}',
+      '.hw-btn{position:fixed;right:22px;bottom:22px;width:58px;height:58px;border:0;border-radius:50%;cursor:pointer;z-index:2147483000;background:#3a2e2a;color:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.28);transition:transform .18s ease,box-shadow .18s ease;padding:0;}',
       '.hw-btn:hover{transform:translateY(-2px) scale(1.04);box-shadow:0 12px 30px rgba(0,0,0,.34);}',
       '.hw-btn.hw-hidden{display:none;}',
-      '.hw-btn svg{width:26px;height:26px;}',
+      '.hw-btn-img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;}',
       '.hw-panel{position:fixed;right:22px;bottom:22px;width:372px;height:588px;max-height:calc(100vh - 44px);background:#f1eeec;border-radius:16px;overflow:hidden;z-index:2147483000;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:14px;color:#2b2320;display:flex;flex-direction:column;box-shadow:0 18px 50px rgba(0,0,0,.32);opacity:0;transform:translateY(16px) scale(.98);pointer-events:none;transition:opacity .22s ease,transform .22s ease;}',
       '.hw-panel.hw-open{opacity:1;transform:none;pointer-events:auto;}',
       '.hw-header{flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:14px 16px;background:#3a2e2a;color:#fff;}',
-      '.hw-avatar{width:34px;height:34px;flex:0 0 auto;display:flex;}',
-      '.hw-avatar svg{width:34px;height:34px;border-radius:50%;}',
+      '.hw-avatar-img{width:34px;height:34px;border-radius:50%;object-fit:cover;flex:0 0 auto;background:#c9b7a3;}',
       '.hw-title{flex:1 1 auto;font-weight:600;font-size:15px;}',
       '.hw-x{border:0;background:transparent;color:#fff;font-size:22px;line-height:1;cursor:pointer;opacity:.8;padding:4px;}',
       '.hw-x:hover{opacity:1;}',
@@ -1069,17 +1079,21 @@
     if (document.querySelector(".hw-panel")) return; // guard double-load
     injectStyle();
 
-    btn = el("button", "hw-btn");
+    var btn = el("button", "hw-btn");
     btn.type = "button";
     btn.setAttribute("aria-label", "Open chat");
-    btn.appendChild(svgSpan(ICON_CHAT));
+    var btnImg = document.createElement("img");
+    btnImg.className = "hw-btn-img";
+    btnImg.src = AVATAR_URL;
+    btnImg.alt = HOTEL_NAME;
+    btn.appendChild(btnImg);
 
     panel = el("div", "hw-panel");
     panel.setAttribute("role", "dialog");
     panel.setAttribute("aria-label", HOTEL_NAME + " chat");
 
     var header = el("div", "hw-header");
-    header.appendChild(svgSpan(ICON_AVATAR, "hw-avatar"));
+    header.appendChild(avatarEl());
     header.appendChild(el("div", "hw-title", HOTEL_NAME));
     var x = el("button", "hw-x");
     x.type = "button";
@@ -1124,7 +1138,7 @@
     powered.rel = "noopener noreferrer";
     powered.textContent = "Powered by ";
     var poweredImg = document.createElement("img");
-    poweredImg.src = "xoombox-logo-main_new.png";
+    poweredImg.src = "https://thexoombox.com/xoombox_logo.png";
     poweredImg.alt = "TheXoombox";
     powered.appendChild(poweredImg);
     panel.appendChild(powered);

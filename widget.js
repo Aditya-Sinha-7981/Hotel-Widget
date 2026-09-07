@@ -135,7 +135,7 @@
 
   /* ---------- DOM refs -------------------------------------------- */
 
-  var btn, panel, body, footer, input, sendBtn, errLine, acWrap, acDrop;
+  var btn, panel, body, footer, input, sendBtn, errLine, acWrap, acDrop, balloon;
 
   /* ---------- small helpers ------------------------------------- */
 
@@ -1012,10 +1012,13 @@
   function injectStyle() {
     var css = [
       '.hw-btn,.hw-panel,.hw-panel *{box-sizing:border-box;}',
-      '.hw-btn{position:fixed;right:22px;bottom:22px;width:58px;height:58px;border:0;border-radius:50%;cursor:pointer;z-index:2147483000;background:#3a2e2a;color:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.28);transition:transform .18s ease,box-shadow .18s ease;padding:0;}',
+      '.hw-btn{position:fixed;right:22px;bottom:22px;width:58px;height:58px;border:0;border-radius:50%;cursor:pointer;z-index:2147483000;background:#3a2e2a;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(0,0,0,.28);transition:transform .18s ease,box-shadow .18s ease;padding:4px;}',
       '.hw-btn:hover{transform:translateY(-2px) scale(1.04);box-shadow:0 12px 30px rgba(0,0,0,.34);}',
       '.hw-btn.hw-hidden{display:none;}',
       '.hw-btn-img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;}',
+      '.hw-balloon{position:fixed;right:90px;bottom:34px;background:#fff;color:#2b2320;font-size:13px;line-height:1.35;padding:9px 13px;border-radius:14px;border-bottom-right-radius:5px;box-shadow:0 6px 18px rgba(0,0,0,.18);z-index:2147482999;max-width:230px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity .25s ease,transform .25s ease;}',
+      '.hw-balloon.hw-balloon-show{opacity:1;transform:none;}',
+      '.hw-balloon::after{content:"";position:absolute;right:-8px;top:50%;margin-top:-6px;border:6px solid transparent;border-left-color:#fff;}',
       '.hw-panel{position:fixed;right:22px;bottom:22px;width:372px;height:588px;max-height:calc(100vh - 44px);background:#f1eeec;border-radius:16px;overflow:hidden;z-index:2147483000;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:14px;color:#2b2320;display:flex;flex-direction:column;box-shadow:0 18px 50px rgba(0,0,0,.32);opacity:0;transform:translateY(16px) scale(.98);pointer-events:none;transition:opacity .22s ease,transform .22s ease;}',
       '.hw-panel.hw-open{opacity:1;transform:none;pointer-events:auto;}',
       '.hw-header{flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:14px 16px;background:#3a2e2a;color:#fff;}',
@@ -1143,6 +1146,10 @@
     powered.appendChild(poweredImg);
     panel.appendChild(powered);
 
+    balloon = el("div", "hw-balloon");
+    balloon.textContent = "Hi, I'm Xoomi, available for any help!";
+
+    document.body.appendChild(balloon);
     document.body.appendChild(btn);
     document.body.appendChild(panel);
 
@@ -1160,13 +1167,31 @@
     document.addEventListener("mousedown", function (e) {
       if (acWrap && !acWrap.contains(e.target)) hideAC();
     });
+
+    setTimeout(function () {
+      if (!isOpen()) showBalloon();
+    }, 3000);
+    setTimeout(function () {
+      hideBalloon();
+    }, 8000);
   }
 
   function togglePanel() { isOpen() ? closePanel() : openPanel(); }
 
+  function showBalloon() {
+    if (!balloon) return;
+    balloon.classList.add("hw-balloon-show");
+  }
+
+  function hideBalloon() {
+    if (!balloon) return;
+    balloon.classList.remove("hw-balloon-show");
+  }
+
   function openPanel() {
     panel.classList.add("hw-open");
     btn.classList.add("hw-hidden");
+    hideBalloon();
     if (!state.started) start();
     resetIdle();
   }
